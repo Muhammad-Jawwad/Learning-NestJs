@@ -1,44 +1,33 @@
-import { Controller, Get, Post,Body, Req, Res, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post,Body, Req, Res, Param, Query, ValidationPipe, UsePipes, ParseIntPipe, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { createUserDto } from 'src/users/dtos/CreateUser.dto';
+import { AuthGuard } from 'src/users/guards/auth/auth.guard';
+import { ValidateCreateUserPipe } from 'src/users/pipes/validate-create-user/validate-create-user.pipe';
+import { UsersService } from 'src/users/services/users/users.service';
 
 @Controller('users')
 export class UsersController {
-    // @Get()
-    // getUsers(){
-    //     return [{ userName: "Jawwad", email: "muhammadjawwad417@gmail.com"}];
-    // }
+    constructor(private userService: UsersService){}
 
-    @Get('subjects')
-    getUsersSubjects(){
-        return [{
-             userName: "Jawwad", 
-             email: "muhammadjawwad417@gmail.com",
-             subjects: [
-                {
-                    id: 1,
-                    title: 'English'
-                },
-                {
-                    id: 2,
-                    title: 'Urdu'
-                },
-                {
-                    id: 3,
-                    title: 'Computer'
-                },
-                {
-                    id: 1,
-                    title: 'Physics'
-                }
-             ]
-            }];
+    @Get()
+    @UseGuards(AuthGuard)
+    getUsers(){
+        return this.userService.fetchUsers();
+    }
+
+    @Get('emails')
+    getUsersEmail(){
+        let data = this.userService.fetchUsersEmail();
+        return data;
     }
 
     @Post('create')
-    createUser(@Body() body:createUserDto ) {
-        console.log(body)
-        return body;
+    @UsePipes(new ValidationPipe())
+    createUser(@Body(ValidateCreateUserPipe) userDetails:createUserDto ) {
+        console.log(userDetails)
+        console.log(userDetails.age.toPrecision());
+        let msg = this.userService.createUser(userDetails);
+        return msg;
     }
 
     // @Get(':id')
@@ -47,15 +36,19 @@ export class UsersController {
     // }
 
     @Get(':id')
-    getUserById(@Param('id') id: string){
+    getUserById(@Param('id', ParseIntPipe) id: number){
         console.log(id);
-        return {id}
+        let res = this.userService.fetchUserById(id);
+        if(!res){
+            throw new HttpException('No User found at that id....😢', HttpStatus.NOT_FOUND)
+        }
+        return res
     }
 
-    @Get()
-    getUsersSorted(@Query('sortBy') sortBy: string){
-        console.log(sortBy)
-        return [{ userName: "Jawwad", email: "muhammadjawwad417@gmail.com", sortBy }];
-    }
+    // @Get()
+    // getUsersSorted(@Query('sortBy') sortBy: string){
+    //     console.log(sortBy)
+    //     return [{ userName: "Jawwad", email: "muhammadjawwad417@gmail.com", sortBy }];
+    // }
 
 }
