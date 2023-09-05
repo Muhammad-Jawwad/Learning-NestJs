@@ -1,5 +1,26 @@
-import { Controller, Get, Post,Body, Req, Res, Param, Query, ValidationPipe, UsePipes, ParseIntPipe, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { 
+    Controller, 
+    Get, 
+    Post, 
+    Patch, 
+    Body, 
+    Req, 
+    Res, 
+    Param, 
+    Query, 
+    ValidationPipe, 
+    UsePipes, 
+    ParseIntPipe, 
+    HttpException, 
+    HttpStatus, 
+    UseGuards 
+} from '@nestjs/common';
+
+import { 
+    Request, 
+    Response 
+} from 'express';
+
 import { createUserDto } from 'src/users/dtos/CreateUser.dto';
 import { AuthGuard } from 'src/users/guards/auth/auth.guard';
 import { ValidateCreateUserPipe } from 'src/users/pipes/validate-create-user/validate-create-user.pipe';
@@ -30,10 +51,16 @@ export class UsersController {
         return msg;
     }
 
-    // @Get(':id')
-    // getUserById(@Req() request: Request, @Res() response:Response){
-    //     console.log(request.params);
-    // }
+    @Patch('update')
+    @UsePipes(new ValidationPipe())
+    updateUserById(@Body(ValidateCreateUserPipe) userDetails:createUserDto){
+        console.log(userDetails);
+        let data = this.userService.updateUserById(userDetails);
+        if(!data){
+            throw new HttpException('User to be updated not found',HttpStatus.BAD_REQUEST);
+        }
+        return {data:data, message:"The user data has been updated"}
+    }
 
     @Get(':id')
     getUserById(@Param('id', ParseIntPipe) id: number){
